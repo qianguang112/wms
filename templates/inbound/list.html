@@ -10,57 +10,114 @@
     </div>
 </div>
 
-<div class="card p-3 mb-3">
-    <form method="get" class="row g-2">
-        <div class="col-md-4">
-            <select name="type" class="form-select">
-                <option value="">全部类型</option>
-                {% for t, label in receipt_type_labels.items() %}
-                <option value="{{ t }}" {% if type==t %}selected{% endif %}>{{ label }}</option>
-                {% endfor %}
-            </select>
-        </div>
-        <div class="col-md-3">
-            <select name="status" class="form-select">
-                <option value="">全部状态</option>
-                <option value="pending" {% if status=='pending' %}selected{% endif %}>待质检</option>
-                <option value="qc_done" {% if status=='qc_done' %}selected{% endif %}>待上架</option>
-                <option value="confirmed" {% if status=='confirmed' %}selected{% endif %}>已入库</option>
-            </select>
-        </div>
-        <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">筛选</button></div>
-    </form>
-</div>
+<ul class="nav nav-tabs mb-3" id="inboundTabs">
+    <li class="nav-item">
+        <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#receipts">收货单</button>
+    </li>
+    <li class="nav-item">
+        <button class="nav-link" data-bs-toggle="tab" data-bs-target="#asns">ASN 到货通知单</button>
+    </li>
+</ul>
 
-<div class="card p-0">
-    <table class="table mb-0">
-        <thead><tr><th>收货单号</th><th>仓库</th><th>类型</th><th>状态</th><th>日期</th><th>操作人</th><th>操作</th></tr></thead>
-        <tbody>
-        {% for r in rows %}
-            <tr>
-                <td><strong>{{ r.receipt_no }}</strong></td>
-                <td>{{ r.warehouse_name }}</td>
-                <td><span class="badge badge-success">{{ receipt_type_labels.get(r.receipt_type, r.receipt_type) }}</span></td>
-                <td>
-                    {% if r.status=='pending' %}<span class="badge badge-warning">待质检</span>
-                    {% elif r.status=='qc_done' %}<span class="badge badge-primary">待上架</span>
-                    {% elif r.status=='confirmed' %}<span class="badge badge-success">已入库</span>
-                    {% else %}<span class="badge badge-secondary">{{ r.status }}</span>
-                    {% endif %}
-                </td>
-                <td>{{ r.receipt_date }}</td>
-                <td>{{ r.created_by or '-' }}</td>
-                <td>
-                    {% if r.status == 'pending' %}<a href="/inbound/receipt/{{ r.id }}" class="btn btn-outline-warning btn-xs">质检</a>
-                    {% elif r.status == 'qc_done' %}<a href="/inbound/receipt/{{ r.id }}/putaway" class="btn btn-outline-success btn-xs">上架</a>
-                    {% else %}<a href="/inbound/receipt/{{ r.id }}" class="btn btn-outline-secondary btn-xs">查看</a>
-                    {% endif %}
-                </td>
-            </tr>
-        {% else %}
-            <tr><td colspan="7" class="text-center text-muted py-4">暂无入库记录</td></tr>
-        {% endfor %}
-        </tbody>
-    </table>
+<div class="tab-content">
+    <!-- 收货单 -->
+    <div class="tab-pane fade show active" id="receipts">
+        <div class="card p-3 mb-3">
+            <form method="get" class="row g-2">
+                <input type="hidden" name="tab" value="receipts">
+                <div class="col-md-4">
+                    <select name="type" class="form-select">
+                        <option value="">全部类型</option>
+                        {% for t, label in receipt_type_labels.items() %}
+                        <option value="{{ t }}" {% if type==t %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3">
+                    <select name="status" class="form-select">
+                        <option value="">全部状态</option>
+                        <option value="pending" {% if status=='pending' %}selected{% endif %}>待质检</option>
+                        <option value="qc_done" {% if status=='qc_done' %}selected{% endif %}>待上架</option>
+                        <option value="confirmed" {% if status=='confirmed' %}selected{% endif %}>已入库</option>
+                    </select>
+                </div>
+                <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">筛选</button></div>
+            </form>
+        </div>
+
+        <div class="card p-0">
+            <table class="table mb-0">
+                <thead><tr><th>收货单号</th><th>仓库</th><th>类型</th><th>状态</th><th>日期</th><th>质检人</th><th>操作</th></tr></thead>
+                <tbody>
+                {% for r in receipts %}
+                    <tr>
+                        <td><strong>{{ r.receipt_no }}</strong></td>
+                        <td>{{ r.warehouse_name }}</td>
+                        <td><span class="badge badge-success">{{ receipt_type_labels.get(r.receipt_type, r.receipt_type) }}</span></td>
+                        <td>
+                            {% if r.status=='pending' %}<span class="badge badge-warning">待质检</span>
+                            {% elif r.status=='qc_done' %}<span class="badge badge-primary">待上架</span>
+                            {% elif r.status=='confirmed' %}<span class="badge badge-success">已入库</span>
+                            {% else %}<span class="badge badge-secondary">{{ r.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ r.receipt_date }}</td>
+                        <td>{{ r.qc_inspector or '-' }}</td>
+                        <td>
+                            {% if r.status == 'pending' %}<a href="/inbound/receipt/{{ r.id }}" class="btn btn-outline-warning btn-xs">质检</a>
+                            {% elif r.status == 'qc_done' %}<a href="/inbound/receipt/{{ r.id }}/putaway" class="btn btn-outline-success btn-xs">上架</a>
+                            {% else %}<a href="/inbound/receipt/{{ r.id }}" class="btn btn-outline-secondary btn-xs">查看</a>
+                            {% endif %}
+                            <form method="post" action="/inbound/receipt/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除收货单 {{ r.receipt_no }}？')">
+                                <button class="btn btn-outline-danger btn-xs"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="7" class="text-center text-muted py-4">暂无收货单</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- ASN -->
+    <div class="tab-pane fade" id="asns">
+        <div class="card p-0">
+            <table class="table mb-0">
+                <thead><tr><th>ASN单号</th><th>仓库</th><th>供应商</th><th>状态</th><th>预计到货</th><th>操作</th></tr></thead>
+                <tbody>
+                {% for a in asns %}
+                    <tr>
+                        <td><strong>{{ a.asn_no }}</strong></td>
+                        <td>{{ a.warehouse_name }}</td>
+                        <td>{{ a.partner_name }}</td>
+                        <td>
+                            {% if a.status=='draft' %}<span class="badge badge-secondary">草稿</span>
+                            {% elif a.status=='receiving' %}<span class="badge badge-warning">收货中</span>
+                            {% elif a.status=='received' %}<span class="badge badge-success">已收货</span>
+                            {% else %}<span class="badge badge-secondary">{{ a.status }}</span>
+                            {% endif %}
+                        </td>
+                        <td>{{ a.expected_date or '-' }}</td>
+                        <td>
+                            <a href="/inbound/asn/{{ a.id }}" class="btn btn-outline-primary btn-xs">查看详情</a>
+                            {% if a.status == 'draft' %}
+                            <form method="post" action="/inbound/asn/{{ a.id }}/receive" style="display:inline">
+                                <button class="btn btn-outline-success btn-xs">确认收货</button>
+                            </form>
+                            {% endif %}
+                            <form method="post" action="/inbound/asn/{{ a.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除 {{ a.asn_no }}？')">
+                                <button class="btn btn-outline-danger btn-xs"><i class="bi bi-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr><td colspan="6" class="text-center text-muted py-4">暂无ASN，请点击"新建ASN"创建</td></tr>
+                {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
 </div>
 {% endblock %}

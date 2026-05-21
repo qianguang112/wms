@@ -6,7 +6,7 @@ from fastapi.staticfiles import StaticFiles
 from core.config import APP_TITLE
 from core.database import init_db
 from routers import dashboard, fixed_asset, office_supply
-from routers import warehouse, sku, partner, inbound, outbound, internal, inventory, container
+from routers import warehouse, sku, partner, inbound, outbound, internal, inventory
 
 
 @asynccontextmanager
@@ -57,7 +57,6 @@ app.include_router(inbound.router)
 app.include_router(outbound.router)
 app.include_router(internal.router)
 app.include_router(inventory.router)
-app.include_router(container.router)
 
 if __name__ == "__main__":
     import uvicorn

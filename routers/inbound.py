@@ -57,6 +57,7 @@ def _get_putaway_recommendation(db, sku_id: int, warehouse_id: int):
 # ======================== 入库列表 ========================
 @router.get("")
 def list_inbound(request: Request, type: str = "", status: str = "", db=Depends(get_db)):
+    # 收货单
     sql = "SELECT r.*, w.name as warehouse_name FROM receipt_headers r JOIN warehouses w ON r.warehouse_id=w.id WHERE 1=1"
     params = []
     if type:
@@ -66,10 +67,18 @@ def list_inbound(request: Request, type: str = "", status: str = "", db=Depends(
         sql += " AND r.status=?"
         params.append(status)
     sql += " ORDER BY r.id DESC"
-    rows = db.execute(sql, params).fetchall()
+    receipts = db.execute(sql, params).fetchall()
+    # ASN
+    asns = db.execute(
+        """SELECT a.*, w.name as warehouse_name, p.name as partner_name
+           FROM asn_headers a
+           JOIN warehouses w ON a.warehouse_id=w.id
+           JOIN partners p ON a.partner_id=p.id
+           ORDER BY a.id DESC"""
+    ).fetchall()
     return templates.TemplateResponse("inbound/list.html", {
         "request": request, "active_page": "inbound",
-        "rows": rows, "type": type, "status": status,
+        "receipts": receipts, "asns": asns, "type": type, "status": status,
         "receipt_types": RECEIPT_TYPES, "receipt_type_labels": RECEIPT_TYPE_LABELS,
     })
 
@@ -137,6 +146,14 @@ def asn_detail(id: int, request: Request, db=Depends(get_db)):
     return templates.TemplateResponse("inbound/asn_detail.html", {
         "request": request, "active_page": "inbound", "asn": asn, "lines": lines,
     })
+
+
+@router.post("/asn/{id}/delete")
+def delete_asn(id: int, db=Depends(get_db)):
+    db.execute("DELETE FROM asn_lines WHERE asn_id=?", (id,))
+    db.execute("DELETE FROM asn_headers WHERE id=?", (id,))
+    db.commit()
+    return RedirectResponse("/inbound", 303)
 
 
 # ======================== 收货 ========================
@@ -213,6 +230,18 @@ def qc_receipt(id: int, line_ids: list = Form(...), accepted_qtys: list = Form(.
     )
     db.commit()
     return RedirectResponse(f"/inbound/receipt/{id}", 303)
+
+
+@router.post("/receipt/{id}/delete")
+def delete_receipt(id: int, db=Depends(get_db)):
+    receipt = db.execute("SELECT * FROM receipt_headers WHERE id=?", (id,)).fetchone()
+    if not receipt:
+        return RedirectResponse("/inbound", 303)
+    db.execute("DELETE FROM putaway_tasks WHERE receipt_line_id IN (SELECT id FROM receipt_lines WHERE receipt_id=?)", (id,))
+    db.execute("DELETE FROM receipt_lines WHERE receipt_id=?", (id,))
+    db.execute("DELETE FROM receipt_headers WHERE id=?", (id,))
+    db.commit()
+    return RedirectResponse("/inbound", 303)
 
 
 # ======================== 上架 ========================

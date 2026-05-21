@@ -62,6 +62,9 @@
                         <button class="btn btn-outline-success btn-xs">生成波次</button>
                     </form>
                     {% endif %}
+                    <form method="post" action="/outbound/so/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除 {{ r.so_no }}？')">
+                        <button class="btn btn-outline-danger btn-xs"><i class="bi bi-trash"></i></button>
+                    </form>
                 </td>
             </tr>
         {% else %}

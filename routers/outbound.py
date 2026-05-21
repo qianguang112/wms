@@ -313,6 +313,25 @@ def ship_wave(id: int, operator: str = Form(""), db=Depends(get_db)):
     return RedirectResponse("/outbound", 303)
 
 
+@router.post("/so/{id}/delete")
+def delete_so(id: int, db=Depends(get_db)):
+    so = db.execute("SELECT * FROM so_headers WHERE id=?", (id,)).fetchone()
+    if not so:
+        return RedirectResponse("/outbound", 303)
+    # 级联删除波次/拣货/出库单行
+    wave_ids = [r[0] for r in db.execute(
+        "SELECT w.id FROM wave_headers w JOIN wave_lines wl ON w.id=wl.wave_id JOIN so_lines sl ON wl.so_line_id=sl.id WHERE sl.so_id=?", (id,)
+    ).fetchall()]
+    for wid in wave_ids:
+        db.execute("DELETE FROM pick_tasks WHERE wave_id=?", (wid,))
+        db.execute("DELETE FROM wave_lines WHERE wave_id=?", (wid,))
+        db.execute("DELETE FROM wave_headers WHERE id=?", (wid,))
+    db.execute("DELETE FROM so_lines WHERE so_id=?", (id,))
+    db.execute("DELETE FROM so_headers WHERE id=?", (id,))
+    db.commit()
+    return RedirectResponse("/outbound", 303)
+
+
 # ======================== 快速出库 ========================
 @router.get("/quick")
 def quick_outbound_form(request: Request, db=Depends(get_db)):
