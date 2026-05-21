@@ -1,15 +1,46 @@
 {% extends "base.html" %}
 {% block title %}收货单 - {{ receipt.receipt_no }} - WMS{% endblock %}
 
+{% block extra_head %}
+<style>
+@media print {
+    .print-header { display: block !important; }
+    .print-header h4 { font-size: 20px; font-weight: 700; }
+    .print-info { margin-bottom: 16px; }
+    .print-info span { margin-right: 32px; font-size: 14px; }
+}
+.print-header { display: none; }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="page-header d-flex justify-content-between align-items-center">
+<div class="page-header d-flex justify-content-between align-items-center no-print">
     <h2><i class="bi bi-clipboard-check me-2"></i>收货单: {{ receipt.receipt_no }}</h2>
-    <span class="badge badge-{% if receipt.status=='pending' %}warning{% elif receipt.status=='qc_done' %}primary{% else %}success{% endif %} fs-6">
-        {{ '待质检' if receipt.status=='pending' else ('待上架' if receipt.status=='qc_done' else '已入库') }}
-    </span>
+    <div>
+        <button class="btn btn-outline-secondary btn-sm me-2" onclick="window.print()"><i class="bi bi-printer me-1"></i>打印</button>
+        <span class="badge badge-{% if receipt.status==S.PENDING %}warning{% elif receipt.status==S.QC_DONE %}info{% elif receipt.status==S.PENDING_PUTAWAY %}primary{% else %}success{% endif %} fs-6">
+            {{ receipt_status_labels.get(receipt.status, receipt.status) }}
+        </span>
+    </div>
 </div>
 
-<div class="row mb-3">
+<!-- 打印标题 -->
+<div class="print-header mb-3">
+    <h4 class="text-center mb-2">收 货 单</h4>
+    <p class="text-center text-muted mb-3">单号：{{ receipt.receipt_no }}</p>
+    <div class="print-info">
+        <span>仓库：{{ receipt.warehouse_name }}</span>
+        <span>类型：{{ receipt_type_labels.get(receipt.receipt_type, receipt.receipt_type) }}</span>
+        <span>日期：{{ receipt.receipt_date }}</span>
+    </div>
+    <div class="print-info">
+        <span>操作人：{{ receipt.created_by or '-' }}</span>
+        <span>质检人：{{ receipt.qc_inspector or '-' }}</span>
+    </div>
+    <hr>
+</div>
+
+<div class="row mb-3 no-print">
     <div class="col-md-3"><div class="card p-3"><div class="text-muted small">仓库</div><strong>{{ receipt.warehouse_name }}</strong></div></div>
     <div class="col-md-3"><div class="card p-3"><div class="text-muted small">类型</div><strong>{{ receipt_type_labels.get(receipt.receipt_type, receipt.receipt_type) }}</strong></div></div>
     <div class="col-md-3"><div class="card p-3"><div class="text-muted small">收货日期</div><strong>{{ receipt.receipt_date }}</strong></div></div>
@@ -17,14 +48,14 @@
     <div class="col-md-3"><div class="card p-3"><div class="text-muted small">质检人</div><strong>{{ receipt.qc_inspector or '-' }}</strong></div></div>
 </div>
 
-{% if receipt.status == 'pending' %}
-<form method="post" action="/inbound/receipt/{{ receipt.id }}/qc">
+{% if receipt.status == S.PENDING %}
+<form method="post" action="/inbound/receipt/{{ receipt.id }}/qc" class="no-print">
 {% endif %}
 <div class="card p-0">
     <table class="table mb-0">
         <thead>
             <tr><th>#</th><th>SKU</th><th>收货数</th><th>合格数</th><th>不合格数</th><th>批号</th><th>效期</th><th>质检结果</th>
-            {% if receipt.status == 'pending' %}<th>备注</th>{% endif %}</tr>
+            {% if receipt.status == S.PENDING %}<th>备注</th>{% endif %}</tr>
         </thead>
         <tbody>
         {% for l in lines %}
@@ -33,37 +64,37 @@
                 <td><strong>{{ l.sku_code }}</strong> - {{ l.sku_name }}</td>
                 <td>{{ l.received_qty }}</td>
                 <td>
-                    {% if receipt.status == 'pending' %}
+                    {% if receipt.status == S.PENDING %}
                     <input type="hidden" name="line_ids" value="{{ l.id }}">
                     <input type="number" name="accepted_qtys" class="form-control form-control-sm" value="{{ l.accepted_qty }}" step="0.01" style="width:90px">
                     {% else %}{{ l.accepted_qty }}{% endif %}
                 </td>
                 <td>
-                    {% if receipt.status == 'pending' %}
+                    {% if receipt.status == S.PENDING %}
                     <input type="number" name="rejected_qtys" class="form-control form-control-sm" value="{{ l.rejected_qty }}" step="0.01" style="width:90px">
                     {% else %}{{ l.rejected_qty }}{% endif %}
                 </td>
                 <td>{{ l.batch_no or '-' }}</td>
                 <td>{{ l.expiry_date or '-' }}</td>
                 <td>
-                    {% if receipt.status == 'pending' %}
+                    {% if receipt.status == S.PENDING %}
                     <select name="qc_results" class="form-select form-select-sm" style="width:100px">
                         <option value="pending">待检</option>
                         <option value="pass">合格</option>
                         <option value="fail">不合格</option>
                     </select>
                     {% else %}
-                    <span class="badge badge-{{ 'success' if l.qc_result=='pass' else ('danger' if l.qc_result=='fail' else 'secondary') }}">{{ l.qc_result }}</span>
+                    <span class="badge badge-{{ 'success' if l.qc_result=='pass' else ('danger' if l.qc_result=='fail' else 'secondary') }}">{{ '合格' if l.qc_result=='pass' else ('不合格' if l.qc_result=='fail' else '待检') }}</span>
                     {% endif %}
                 </td>
-                {% if receipt.status == 'pending' %}<td><input type="text" name="qc_remarks" class="form-control form-control-sm" style="width:120px"></td>{% endif %}
+                {% if receipt.status == S.PENDING %}<td><input type="text" name="qc_remarks" class="form-control form-control-sm" style="width:120px"></td>{% endif %}
             </tr>
         {% endfor %}
         </tbody>
     </table>
 </div>
 
-{% if receipt.status == 'pending' %}
+{% if receipt.status == S.PENDING %}
 <div class="row mt-3 align-items-end">
     <div class="col-md-3">
         <label class="form-label">质检人 <span class="text-danger">*</span></label>
@@ -75,7 +106,14 @@
     </div>
 </div>
 </form>
-{% elif receipt.status == 'qc_done' %}
+{% elif receipt.status == S.QC_DONE %}
+<div class="mt-3">
+    <form method="post" action="/inbound/receipt/{{ receipt.id }}/release" style="display:inline" onsubmit="return confirm('确认质检已完成，释放到待上架状态？')">
+        <button type="submit" class="btn btn-primary"><i class="bi bi-box-arrow-right me-1"></i>释放到待上架</button>
+    </form>
+    <a href="/inbound" class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-left me-1"></i>返回</a>
+</div>
+{% elif receipt.status == S.PENDING_PUTAWAY %}
 <div class="mt-3">
     <a href="/inbound/receipt/{{ receipt.id }}/putaway" class="btn btn-success"><i class="bi bi-arrow-up-right-square me-1"></i>去上架</a>
     <a href="/inbound" class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-left me-1"></i>返回</a>

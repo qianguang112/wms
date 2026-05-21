@@ -2,7 +2,10 @@
 {% block title %}仪表盘 - WMS{% endblock %}
 
 {% block content %}
-<div class="page-header"><h2><i class="bi bi-speedometer2 me-2"></i>仪表盘</h2></div>
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-speedometer2 me-2"></i>仪表盘</h2>
+    <a href="/inventory" class="btn btn-outline-primary btn-sm"><i class="bi bi-clipboard-data me-1"></i>库存查询</a>
+</div>
 
 <!-- WMS 核心指标 -->
 <div class="row g-4 mb-4">
@@ -28,6 +31,39 @@
         <div class="card card-stat {% if near_expiry_count > 0 %}stat-danger{% endif %} p-3">
             <div class="value">{{ near_expiry_count }}</div>
             <div class="label">近效期预警</div>
+        </div>
+    </div>
+</div>
+
+<!-- 库存概览 -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ inventory_total_qty }}</div>
+            <div class="label">库存总数量</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ inventory_total_records }}</div>
+            <div class="label">库存记录数</div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-3">
+            <h6 class="fw-bold mb-2">各仓库库存分布</h6>
+            <div class="d-flex gap-3 flex-wrap">
+                {% for wh in warehouse_inventory %}
+                <a href="/inventory?warehouse_id={{ wh.id }}" class="text-decoration-none">
+                    <div class="text-center px-3 py-2 rounded-3" style="background:var(--bg); min-width:80px;">
+                        <div class="fw-bold fs-5" style="color:#007AFF;">{{ wh.total_qty }}</div>
+                        <small class="text-muted">{{ wh.name }}</small>
+                    </div>
+                </a>
+                {% else %}
+                <small class="text-muted">暂无库存数据</small>
+                {% endfor %}
+            </div>
         </div>
     </div>
 </div>

@@ -227,10 +227,13 @@
 
         /* 打印样式 */
         @media print {
-            .sidebar, .btn, .no-print { display: none !important; }
+            .sidebar, .btn, .no-print, input, select, textarea, button, .form-control, .form-select { display: none !important; }
             .main-content { margin-left: 0 !important; padding: 0 !important; }
             body { background: white; }
             .card { box-shadow: none; border: 1px solid #ddd; }
+            .badge { border: 1px solid #999 !important; }
+            table { font-size: 13px; }
+            table thead th { color: #333 !important; }
         }
 
         @media (max-width: 768px) {

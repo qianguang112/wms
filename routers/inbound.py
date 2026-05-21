@@ -3,6 +3,8 @@ from fastapi import APIRouter, Request, Form, Depends
 from fastapi.responses import RedirectResponse
 from core.database import get_db
 from core.config import (templates, RECEIPT_TYPES, RECEIPT_TYPE_LABELS,
+                         RECEIPT_STATUS_LABELS, RECEIPT_STATUS_PENDING, RECEIPT_STATUS_QC_DONE,
+                         RECEIPT_STATUS_PENDING_PUTAWAY, RECEIPT_STATUS_CONFIRMED,
                          AREA_TYPE_LABELS, LOCATION_STATUS_EMPTY, LOCATION_STATUS_OCCUPIED)
 from utils.helpers import (generate_asn_no, generate_receipt_no, safe_create,
                            calc_expiry_date, write_transaction, upsert_inventory, update_location_load)
@@ -80,6 +82,9 @@ def list_inbound(request: Request, type: str = "", status: str = "", db=Depends(
         "request": request, "active_page": "inbound",
         "receipts": receipts, "asns": asns, "type": type, "status": status,
         "receipt_types": RECEIPT_TYPES, "receipt_type_labels": RECEIPT_TYPE_LABELS,
+        "receipt_status_labels": RECEIPT_STATUS_LABELS,
+        "S": {"PENDING": RECEIPT_STATUS_PENDING, "QC_DONE": RECEIPT_STATUS_QC_DONE,
+              "PENDING_PUTAWAY": RECEIPT_STATUS_PENDING_PUTAWAY, "CONFIRMED": RECEIPT_STATUS_CONFIRMED},
     })
 
 
@@ -206,6 +211,9 @@ def receipt_detail(id: int, request: Request, db=Depends(get_db)):
     return templates.TemplateResponse("inbound/receipt_detail.html", {
         "request": request, "active_page": "inbound", "receipt": receipt, "lines": lines,
         "receipt_types": RECEIPT_TYPES, "receipt_type_labels": RECEIPT_TYPE_LABELS,
+        "receipt_status_labels": RECEIPT_STATUS_LABELS,
+        "S": {"PENDING": RECEIPT_STATUS_PENDING, "QC_DONE": RECEIPT_STATUS_QC_DONE,
+              "PENDING_PUTAWAY": RECEIPT_STATUS_PENDING_PUTAWAY, "CONFIRMED": RECEIPT_STATUS_CONFIRMED},
     })
 
 
@@ -225,9 +233,21 @@ def qc_receipt(id: int, line_ids: list = Form(...), accepted_qtys: list = Form(.
             (accepted, rejected, result, remark, lid)
         )
     db.execute(
-        "UPDATE receipt_headers SET status='qc_done', qc_inspector=?, updated_at=datetime('now','localtime') WHERE id=?",
-        (qc_inspector or None, id)
+        "UPDATE receipt_headers SET status=?, qc_inspector=?, updated_at=datetime('now','localtime') WHERE id=?",
+        (RECEIPT_STATUS_QC_DONE, qc_inspector or None, id)
     )
+    db.commit()
+    return RedirectResponse(f"/inbound/receipt/{id}", 303)
+
+
+@router.post("/receipt/{id}/release")
+def release_for_putaway(id: int, db=Depends(get_db)):
+    result = db.execute(
+        "UPDATE receipt_headers SET status=?, updated_at=datetime('now','localtime') WHERE id=? AND status=?",
+        (RECEIPT_STATUS_PENDING_PUTAWAY, id, RECEIPT_STATUS_QC_DONE)
+    )
+    if result.rowcount == 0:
+        return RedirectResponse("/inbound", 303)
     db.commit()
     return RedirectResponse(f"/inbound/receipt/{id}", 303)
 
@@ -249,7 +269,8 @@ def delete_receipt(id: int, db=Depends(get_db)):
 def putaway_page(id: int, request: Request, db=Depends(get_db)):
     receipt = db.execute(
         """SELECT r.*, w.name as warehouse_name, w.id as wh_id
-           FROM receipt_headers r JOIN warehouses w ON r.warehouse_id=w.id WHERE r.id=?""", (id,)
+           FROM receipt_headers r JOIN warehouses w ON r.warehouse_id=w.id WHERE r.id=? AND r.status=?""",
+        (id, RECEIPT_STATUS_PENDING_PUTAWAY)
     ).fetchone()
     if not receipt:
         return RedirectResponse("/inbound", 303)
@@ -318,7 +339,7 @@ def confirm_putaway(id: int, line_ids: list = Form(...), location_ids: list = Fo
             (operator, lid)
         )
 
-    db.execute("UPDATE receipt_headers SET status='confirmed', updated_at=datetime('now','localtime') WHERE id=?", (id,))
+    db.execute("UPDATE receipt_headers SET status=?, updated_at=datetime('now','localtime') WHERE id=?", (RECEIPT_STATUS_CONFIRMED, id))
     db.commit()
     return RedirectResponse("/inbound", 303)
 
@@ -383,7 +404,7 @@ def quick_inbound(request: Request, warehouse_id: int = Form(None), receipt_type
         receipt_no = generate_receipt_no(db)
         db.execute(
             "INSERT INTO receipt_headers (receipt_no, warehouse_id, receipt_type, status, created_by, remark) VALUES (?,?,?,?,?,?)",
-            (receipt_no, warehouse_id, receipt_type, 'pending', operator, remark)
+            (receipt_no, warehouse_id, receipt_type, RECEIPT_STATUS_PENDING, operator, remark)
         )
         receipt_id = db.execute("SELECT last_insert_rowid() as id").fetchone()["id"]
         db.execute(
@@ -398,7 +419,7 @@ def quick_inbound(request: Request, warehouse_id: int = Form(None), receipt_type
                           reference_type="receipt", reference_no=receipt_no,
                           operator=operator, remark=f"{receipt_type}入库")
         update_location_load(db, location_id)
-        db.execute("UPDATE receipt_headers SET status='confirmed', updated_at=datetime('now','localtime') WHERE id=?", (receipt_id,))
+        db.execute("UPDATE receipt_headers SET status=?, updated_at=datetime('now','localtime') WHERE id=?", (RECEIPT_STATUS_CONFIRMED, receipt_id))
         db.commit()
 
     safe_create(db, do_insert)

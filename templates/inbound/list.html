@@ -36,9 +36,10 @@
                 <div class="col-md-3">
                     <select name="status" class="form-select">
                         <option value="">全部状态</option>
-                        <option value="pending" {% if status=='pending' %}selected{% endif %}>待质检</option>
-                        <option value="qc_done" {% if status=='qc_done' %}selected{% endif %}>待上架</option>
-                        <option value="confirmed" {% if status=='confirmed' %}selected{% endif %}>已入库</option>
+                        <option value="{{ S.PENDING }}" {% if status==S.PENDING %}selected{% endif %}>待质检</option>
+                        <option value="{{ S.QC_DONE }}" {% if status==S.QC_DONE %}selected{% endif %}>完成质检</option>
+                        <option value="{{ S.PENDING_PUTAWAY }}" {% if status==S.PENDING_PUTAWAY %}selected{% endif %}>待上架</option>
+                        <option value="{{ S.CONFIRMED }}" {% if status==S.CONFIRMED %}selected{% endif %}>已入库</option>
                     </select>
                 </div>
                 <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">筛选</button></div>
@@ -55,17 +56,19 @@
                         <td>{{ r.warehouse_name }}</td>
                         <td><span class="badge badge-success">{{ receipt_type_labels.get(r.receipt_type, r.receipt_type) }}</span></td>
                         <td>
-                            {% if r.status=='pending' %}<span class="badge badge-warning">待质检</span>
-                            {% elif r.status=='qc_done' %}<span class="badge badge-primary">待上架</span>
-                            {% elif r.status=='confirmed' %}<span class="badge badge-success">已入库</span>
+                            {% if r.status==S.PENDING %}<span class="badge badge-warning">待质检</span>
+                            {% elif r.status==S.QC_DONE %}<span class="badge badge-info">完成质检</span>
+                            {% elif r.status==S.PENDING_PUTAWAY %}<span class="badge badge-primary">待上架</span>
+                            {% elif r.status==S.CONFIRMED %}<span class="badge badge-success">已入库</span>
                             {% else %}<span class="badge badge-secondary">{{ r.status }}</span>
                             {% endif %}
                         </td>
                         <td>{{ r.receipt_date }}</td>
                         <td>{{ r.qc_inspector or '-' }}</td>
                         <td>
-                            {% if r.status == 'pending' %}<a href="/inbound/receipt/{{ r.id }}" class="btn btn-outline-warning btn-xs">质检</a>
-                            {% elif r.status == 'qc_done' %}<a href="/inbound/receipt/{{ r.id }}/putaway" class="btn btn-outline-success btn-xs">上架</a>
+                            {% if r.status == S.PENDING %}<a href="/inbound/receipt/{{ r.id }}" class="btn btn-outline-warning btn-xs">质检</a>
+                            {% elif r.status == S.QC_DONE %}<a href="/inbound/receipt/{{ r.id }}" class="btn btn-outline-info btn-xs">释放上架</a>
+                            {% elif r.status == S.PENDING_PUTAWAY %}<a href="/inbound/receipt/{{ r.id }}/putaway" class="btn btn-outline-success btn-xs">上架</a>
                             {% else %}<a href="/inbound/receipt/{{ r.id }}" class="btn btn-outline-secondary btn-xs">查看</a>
                             {% endif %}
                             <form method="post" action="/inbound/receipt/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除收货单 {{ r.receipt_no }}？')">

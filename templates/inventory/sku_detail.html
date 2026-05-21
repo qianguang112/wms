@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}{{ sku.sku_code }} 库存分布 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-geo-alt me-2"></i>{{ sku.sku_code }} 库存分布</h2>
+    <a href="/inventory" class="btn btn-outline-secondary btn-sm"><i class="bi bi-arrow-left me-1"></i>返回库存总览</a>
+</div>
+
+<!-- SKU 汇总卡片 -->
+<div class="row g-3 mb-3">
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ summary.total_qty }}</div>
+            <div class="label">总库存量</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ summary.frozen_qty }}</div>
+            <div class="label">冻结量</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value" style="color:#34C759;">{{ summary.total_qty - summary.frozen_qty }}</div>
+            <div class="label">可用量</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 d-flex align-items-center justify-content-center" style="min-height:80px;">
+            <div><span class="fw-bold">{{ sku.sku_code }}</span> <small class="text-muted">{{ sku.name }}</small></div>
+            <div><small class="text-muted">{{ sku.unit or '-' }} / {{ sku.spec or '无规格' }}</small></div>
+        </div>
+    </div>
+</div>
+
+<!-- 筛选 -->
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-4">
+            <select name="warehouse_id" class="form-select">
+                <option value="">全部仓库</option>
+                {% for w in warehouses %}<option value="{{ w.id }}" {% if warehouse_id == w.id|string %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-4">
+            <input type="text" name="batch_no" class="form-control" placeholder="搜索批次" value="{{ batch_no }}">
+        </div>
+        <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">筛选</button></div>
+        <div class="col-md-2"><a href="/inventory/sku/{{ sku.id }}" class="btn btn-outline-secondary w-100">重置</a></div>
+    </form>
+</div>
+
+<!-- 明细表格 -->
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead><tr><th>仓库</th><th>库区</th><th>库位</th><th>批次</th><th>数量</th><th>冻结量</th><th>可用量</th><th>效期</th><th>状态</th><th style="width:100px">操作</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+            <tr>
+                <td>{{ r.warehouse_name }}</td>
+                <td>{{ r.area_name }}</td>
+                <td><strong>{{ r.location_code }}</strong></td>
+                <td>{{ r.batch_no or '-' }}</td>
+                <td>{{ r.qty }}</td>
+                <td>{{ r.frozen_qty }}</td>
+                <td><strong style="color:#34C759;">{{ r.qty - r.frozen_qty }}</strong></td>
+                <td>{% if r.expiry_date %}<span class="badge badge-warning">{{ r.expiry_date }}</span>{% else %}-{% endif %}</td>
+                <td><span class="badge badge-{{ 'success' if r.status == 'available' else 'danger' }}">{{ r.status }}</span></td>
+                <td>
+                    <a href="/inventory/{{ r.id }}/edit" class="btn btn-outline-primary btn-xs me-1"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="/inventory/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除该库存记录？')">
+                        <button class="btn btn-outline-danger btn-xs"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="10" class="text-center text-muted py-4">该 SKU 暂无库存明细</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

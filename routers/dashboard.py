@@ -46,13 +46,13 @@ def dashboard(request: Request, db=Depends(get_db)):
         (f"+{DEFAULT_EXPIRY_WARNING_DAYS} days",)
     ).fetchone()["c"]
 
-    pending_receipt = db.execute(
-        "SELECT COUNT(*) as c FROM receipt_headers WHERE status IN ('pending','qc_done')"
-    ).fetchone()["c"]
-
-    pending_putaway = db.execute(
-        "SELECT COUNT(*) as c FROM receipt_headers WHERE status='qc_done'"
-    ).fetchone()["c"]
+    receipt_row = db.execute(
+        """SELECT COUNT(*) as pending_receipt,
+                  SUM(CASE WHEN status='pending_putaway' THEN 1 ELSE 0 END) as pending_putaway
+           FROM receipt_headers WHERE status IN ('pending','qc_done','pending_putaway')"""
+    ).fetchone()
+    pending_receipt = receipt_row["pending_receipt"]
+    pending_putaway = receipt_row["pending_putaway"]
 
     pending_pick = db.execute(
         "SELECT COUNT(*) as c FROM pick_tasks WHERE status='pending'"
@@ -74,6 +74,26 @@ def dashboard(request: Request, db=Depends(get_db)):
         "SELECT COUNT(*) as c FROM wave_headers WHERE status='shipped' AND updated_at LIKE ?",
         (f"{today}%",)
     ).fetchone()["c"]
+
+    # 库存概览统计
+    inventory_total_records = db.execute(
+        "SELECT COUNT(*) as c FROM inventory WHERE qty > 0"
+    ).fetchone()["c"]
+
+    inventory_total_qty = db.execute(
+        "SELECT COALESCE(SUM(qty), 0) as c FROM inventory"
+    ).fetchone()["c"]
+
+    warehouse_inventory = db.execute(
+        """SELECT w.id, w.name, COUNT(i.id) as record_count, COALESCE(SUM(i.qty), 0) as total_qty
+           FROM inventory i
+           JOIN locations l ON i.location_id=l.id
+           JOIN warehouse_areas a ON l.area_id=a.id
+           JOIN warehouses w ON a.warehouse_id=w.id
+           WHERE i.qty > 0
+           GROUP BY w.id, w.name
+           ORDER BY total_qty DESC"""
+    ).fetchall()
 
     return templates.TemplateResponse("dashboard.html", {
         "request": request,
@@ -101,4 +121,8 @@ def dashboard(request: Request, db=Depends(get_db)):
         "frozen_count": frozen_count,
         "wms_today_inbound": wms_today_inbound,
         "wms_today_outbound": wms_today_outbound,
+        # 库存概览
+        "inventory_total_records": inventory_total_records,
+        "inventory_total_qty": inventory_total_qty,
+        "warehouse_inventory": warehouse_inventory,
     })

@@ -14,7 +14,7 @@ router = APIRouter(prefix="/internal")
 @router.get("")
 def overview(request: Request, db=Depends(get_db)):
     pending_asn = db.execute("SELECT COUNT(*) as c FROM asn_headers WHERE status IN ('draft','receiving')").fetchone()["c"]
-    pending_receipt = db.execute("SELECT COUNT(*) as c FROM receipt_headers WHERE status IN ('pending','qc_done')").fetchone()["c"]
+    pending_receipt = db.execute("SELECT COUNT(*) as c FROM receipt_headers WHERE status IN ('pending','qc_done','pending_putaway')").fetchone()["c"]
     pending_pick = db.execute("SELECT COUNT(*) as c FROM pick_tasks WHERE status='pending'").fetchone()["c"]
     pending_ship = db.execute("SELECT COUNT(*) as c FROM wave_headers WHERE status IN ('picked','packed')").fetchone()["c"]
     frozen_count = db.execute("SELECT COUNT(*) as c FROM inventory_blocks WHERE status='frozen'").fetchone()["c"]

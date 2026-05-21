@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block title %}编辑库存 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-pencil-square me-2"></i>编辑库存记录</h2>
+</div>
+
+<div class="card p-4" style="max-width: 720px;">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+
+    <div class="mb-3 text-muted">
+        <small>当前：<strong>{{ inv.sku_code }}</strong> - {{ inv.sku_name }} / {{ inv.location_code }} ({{ inv.area_name }}) / 批次: {{ inv.batch_no or '-' }}</small>
+    </div>
+
+    <form method="post">
+        <div class="row">
+            <div class="col-md-6 mb-3">
+                <label class="form-label">SKU <span class="text-danger">*</span></label>
+                <select name="sku_id" class="form-select" required>
+                    <option value="">请选择SKU</option>
+                    {% for s in skus %}
+                    <option value="{{ s.id }}" {% if inv.sku_id==s.id %}selected{% endif %}>{{ s.sku_code }} - {{ s.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6 mb-3">
+                <label class="form-label">库位 <span class="text-danger">*</span></label>
+                <select name="location_id" class="form-select" required>
+                    <option value="">请选择库位</option>
+                    {% for l in locations %}
+                    <option value="{{ l.id }}" {% if inv.location_id==l.id %}selected{% endif %}>{{ l.warehouse_name }} / {{ l.area_code }} / {{ l.code }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">批次</label>
+                <input type="text" name="batch_no" class="form-control" value="{{ inv.batch_no or '' }}">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">数量 <span class="text-danger">*</span></label>
+                <input type="number" name="qty" class="form-control" value="{{ inv.qty }}" step="0.01" required>
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">冻结量</label>
+                <input type="number" name="frozen_qty" class="form-control" value="{{ inv.frozen_qty }}" step="0.01">
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-md-4 mb-3">
+                <label class="form-label">生产日期</label>
+                <input type="date" name="production_date" class="form-control" value="{{ inv.production_date or '' }}">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">效期至</label>
+                <input type="date" name="expiry_date" class="form-control" value="{{ inv.expiry_date or '' }}">
+            </div>
+            <div class="col-md-4 mb-3">
+                <label class="form-label">状态</label>
+                <select name="status" class="form-select">
+                    {% for s in statuses %}
+                    <option value="{{ s }}" {% if inv.status==s %}selected{% endif %}>{{ status_labels[s] }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/inventory" class="btn btn-outline-secondary ms-2">取消</a>
+    </form>
+</div>
+{% endblock %}
