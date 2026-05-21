@@ -1,0 +1,67 @@
+{% extends "base.html" %}
+{% block title %}库内作业 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-arrow-left-right me-2"></i>库内作业</h2>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="value text-warning">{{ pending_receipt }}</div>
+            <div class="label">待上架</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="value text-primary">{{ pending_pick }}</div>
+            <div class="label">待拣货</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="value text-danger">{{ near_expiry }}</div>
+            <div class="label">近效期项</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card p-3 text-center">
+            <div class="value text-danger">{{ frozen_count }}</div>
+            <div class="label">冻结中</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3">
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5><i class="bi bi-clipboard-check me-2"></i>盘点作业</h5>
+            <p class="text-muted small">明盘、盲盘、循环盘点、动碰盘点</p>
+            <a href="/internal/count/plan/new" class="btn btn-outline-primary btn-sm"><i class="bi bi-plus-lg me-1"></i>新建盘点计划</a>
+            <span class="ms-2 text-muted small">待盘点: {{ pending_count }}项</span>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5><i class="bi bi-arrows-move me-2"></i>移库/移位</h5>
+            <p class="text-muted small">库位调整、库内整理</p>
+            <a href="/internal/move" class="btn btn-outline-primary btn-sm"><i class="bi bi-arrow-left-right me-1"></i>去移库</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5><i class="bi bi-lock me-2"></i>库存冻结/释放</h5>
+            <p class="text-muted small">质检冻结、异常锁定</p>
+            <a href="/internal/block" class="btn btn-outline-primary btn-sm"><i class="bi bi-lock me-1"></i>管理冻结</a>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card p-4">
+            <h5><i class="bi bi-exclamation-triangle me-2"></i>效期预警</h5>
+            <p class="text-muted small">近效期自动预警，FEFO强制校验</p>
+            <a href="/internal/expiry-warning" class="btn btn-outline-warning btn-sm"><i class="bi bi-exclamation-triangle me-1"></i>查看预警</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

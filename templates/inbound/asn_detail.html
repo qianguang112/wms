@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}ASN详情 - {{ asn.asn_no }} - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-truck me-2"></i>ASN: {{ asn.asn_no }}</h2>
+    <span class="badge badge-{% if asn.status=='draft' %}secondary{% elif asn.status=='receiving' %}warning{% else %}success{% endif %} fs-6">{{ asn.status }}</span>
+</div>
+
+<div class="row mb-3">
+    <div class="col-md-3"><div class="card p-3"><div class="text-muted small">仓库</div><strong>{{ asn.warehouse_name }}</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><div class="text-muted small">供应商</div><strong>{{ asn.partner_name }}</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><div class="text-muted small">预计到货</div><strong>{{ asn.expected_date or '-' }}</strong></div></div>
+    <div class="col-md-3"><div class="card p-3"><div class="text-muted small">创建人</div><strong>{{ asn.created_by or '-' }}</strong></div></div>
+</div>
+
+<div class="card p-0 mb-3">
+    <table class="table mb-0">
+        <thead><tr><th>#</th><th>SKU</th><th>期望数量</th><th>已收数量</th><th>批号</th><th>生产日期</th><th>效期</th></tr></thead>
+        <tbody>
+        {% for l in lines %}
+            <tr>
+                <td>{{ l.line_no }}</td>
+                <td><strong>{{ l.sku_code }}</strong> - {{ l.sku_name }}</td>
+                <td>{{ l.expected_qty }} {{ l.unit }}</td>
+                <td>{{ l.received_qty }}</td>
+                <td>{{ l.batch_no or '-' }}</td>
+                <td>{{ l.production_date or '-' }}</td>
+                <td>{{ l.expiry_date or '-' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% if asn.status == 'draft' %}
+<form method="post" action="/inbound/asn/{{ asn.id }}/receive" class="d-inline">
+    <input type="hidden" name="receipt_type" value="{{ asn.asn_type }}">
+    <button type="submit" class="btn btn-primary"><i class="bi bi-box-arrow-in-down me-1"></i>生成收货单</button>
+</form>
+{% endif %}
+<a href="/inbound" class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-left me-1"></i>返回</a>
+{% endblock %}

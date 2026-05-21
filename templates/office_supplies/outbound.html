@@ -1,0 +1,60 @@
+{% extends "base.html" %}
+{% block title %}领用登记 - {{ supply.name }}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-box-arrow-up me-2"></i>领用登记</h2>
+</div>
+
+<div class="card p-4" style="max-width:600px;">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <div class="mb-3">
+        <span class="text-muted">物品：</span>
+        <strong>{{ supply.name }}</strong>
+        <span class="text-muted ms-3">编号：</span>
+        <code>{{ supply.item_no }}</code>
+        <span class="text-muted ms-3">当前库存：</span>
+        <strong {% if supply.current_qty <= 0 %}style="color:#EF4444;"{% endif %}>
+            {{ supply.current_qty }} {{ supply.unit }}
+        </strong>
+    </div>
+    <hr>
+    <form method="post">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">领用数量 <span class="text-danger">*</span></label>
+                <input type="number" name="qty" class="form-control" required min="1" step="1" value="1" max="{{ supply.current_qty }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">领用人 <span class="text-danger">*</span></label>
+                <input type="text" name="receiver" class="form-control" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">领用部门</label>
+                <input type="text" name="department" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">领用日期</label>
+                <input type="date" name="outbound_date" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">用途</label>
+                <input type="text" name="purpose" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">备注</label>
+                <input type="text" name="remark" class="form-control">
+            </div>
+        </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-warning"><i class="bi bi-check-lg me-1"></i>确认领用</button>
+            <a href="/supplies" class="btn btn-outline-secondary ms-2">取消</a>
+        </div>
+    </form>
+</div>
+</div>
+{% endblock %}

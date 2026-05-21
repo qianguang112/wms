@@ -1,0 +1,42 @@
+{% extends "base.html" %}
+{% block title %}盘点执行 - {{ plan.plan_no }} - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-pencil-square me-2"></i>盘点执行: {{ plan.plan_no }}</h2>
+    <p class="text-muted">{{ plan.warehouse_name }} · {{ count_type_labels.get(plan.count_type, plan.count_type) }} · 共 {{ tasks|length }} 项待盘</p>
+</div>
+
+<form method="post">
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead><tr><th>库位</th><th>SKU</th><th>批次</th>
+            {% if plan.count_type != 'blind' %}<th>系统数量</th>{% endif %}
+            <th>实盘数量</th></tr></thead>
+        <tbody>
+        {% for t in tasks %}
+            <tr>
+                <td><span class="badge badge-primary">{{ t.location_code }}</span></td>
+                <td>{{ t.sku_name or '-' }} <small class="text-muted">{{ t.sku_code or '' }}</small></td>
+                <td>{{ t.batch_no or '-' }}</td>
+                {% if plan.count_type != 'blind' %}<td>{{ t.system_qty }} {{ t.unit or '' }}</td>{% endif %}
+                <td>
+                    <input type="hidden" name="task_ids" value="{{ t.id }}">
+                    <input type="number" name="count_qtys" class="form-control form-control-sm" step="0.01" style="width:110px" placeholder="实盘数">
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-3">
+    <div class="mb-3">
+        <label class="form-label">盘点人</label>
+        <input type="text" name="counted_by" class="form-control" style="max-width:240px;">
+    </div>
+    <button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>提交盘点</button>
+    <a href="/internal/count/plan/{{ plan.id }}" class="btn btn-outline-secondary ms-2">返回</a>
+</div>
+</form>
+{% endblock %}

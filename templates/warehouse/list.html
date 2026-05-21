@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}仓库管理 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-geo-alt me-2"></i>仓库管理</h2>
+    <a href="/warehouse/new" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>新增仓库</a>
+</div>
+
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead>
+            <tr><th>编码</th><th>名称</th><th>地址</th><th>负责人</th><th>状态</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+            <tr>
+                <td><strong>{{ r.code }}</strong></td>
+                <td>{{ r.name }}</td>
+                <td>{{ r.address or '-' }}</td>
+                <td>{{ r.manager or '-' }}</td>
+                <td><span class="badge badge-{{ 'active' if r.status=='active' else 'secondary' }}">{{ '启用' if r.status=='active' else '停用' }}</span></td>
+                <td>
+                    <a href="/warehouse/{{ r.id }}/areas" class="btn btn-outline-secondary btn-xs me-1"><i class="bi bi-diagram-2"></i> 库区</a>
+                    <a href="/warehouse/{{ r.id }}/edit" class="btn btn-outline-primary btn-xs me-1"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="/warehouse/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除仓库 {{ r.name }} 及其所有库区、库位？')">
+                        <button class="btn btn-outline-danger btn-xs"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-4">暂无仓库，请新增</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

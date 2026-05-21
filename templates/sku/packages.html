@@ -1,0 +1,88 @@
+{% extends "base.html" %}
+{% block title %}{{ sku.name }} - 包装规格 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2><i class="bi bi-boxes me-2"></i>{{ sku.name }} - 包装规格</h2>
+        <p class="text-muted mb-0">{{ sku.sku_code }} · 基础单位: {{ sku.unit }}</p>
+    </div>
+</div>
+
+{% if error %}
+<div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+    <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+</div>
+{% endif %}
+<div class="card p-3 mb-3">
+    <form method="post" action="/sku/{{ sku.id }}/packages/new" class="row g-2 align-items-end">
+        <div class="col-md-2">
+            <label class="form-label">包装类型</label>
+            <select name="package_type" class="form-select">
+                <option value="box">箱</option>
+                <option value="pallet">托</option>
+                <option value="piece">件</option>
+            </select>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">换算数量</label>
+            <input type="number" name="conversion_qty" class="form-control" value="1" step="0.01" required>
+        </div>
+        <div class="col-md-2">
+            <label class="form-label">条码</label>
+            <input type="text" name="barcode" class="form-control">
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">长(cm)</label>
+            <input type="number" name="length" class="form-control" step="0.1">
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">宽(cm)</label>
+            <input type="number" name="width" class="form-control" step="0.1">
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">高(cm)</label>
+            <input type="number" name="height" class="form-control" step="0.1">
+        </div>
+        <div class="col-md-1">
+            <label class="form-label">重(kg)</label>
+            <input type="number" name="weight" class="form-control" step="0.01">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-primary w-100"><i class="bi bi-plus-lg"></i> 添加</button>
+        </div>
+    </form>
+</div>
+
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead>
+            <tr><th>包装类型</th><th>换算数量</th><th>条码</th><th>尺寸(长×宽×高cm)</th><th>重量(kg)</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+        {% for p in packages %}
+            <tr>
+                <td>
+                    {% if p.package_type=='box' %}<span class="badge badge-success">箱</span>
+                    {% elif p.package_type=='pallet' %}<span class="badge badge-warning">托</span>
+                    {% else %}<span class="badge badge-secondary">件</span>{% endif %}
+                </td>
+                <td>1 = {{ p.conversion_qty }} {{ sku.unit }}</td>
+                <td>{{ p.barcode or '-' }}</td>
+                <td>{{ p.length or '-' }} × {{ p.width or '-' }} × {{ p.height or '-' }}</td>
+                <td>{{ p.weight or '-' }}</td>
+                <td>
+                    <form method="post" action="/sku/packages/{{ p.id }}/delete" style="display:inline" onsubmit="return confirm('删除？')">
+                        <button class="btn btn-outline-danger btn-xs"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="6" class="text-center text-muted py-3">暂无包装规格</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<a href="/sku" class="btn btn-outline-secondary mt-3"><i class="bi bi-arrow-left"></i> 返回SKU列表</a>
+{% endblock %}

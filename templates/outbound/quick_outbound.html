@@ -1,0 +1,19 @@
+{% extends "base.html" %}
+{% block title %}快速出库 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-lightning me-2"></i>快速出库</h2>
+</div>
+
+<div class="card p-4" style="max-width: 640px;">
+    <div class="alert alert-info"><i class="bi bi-info-circle me-2"></i>快速出库会创建出库单、生成波次并分配拣货，后续请到出库管理完成拣货发货。</div>
+    <form method="get" action="/outbound/so/new">
+        <div class="mb-3">
+            <p>快速出库请先创建出库单，系统会自动生成波次和拣货任务。</p>
+        </div>
+        <a href="/outbound/so/new" class="btn btn-primary"><i class="bi bi-file-earmark-text me-1"></i>去建出库单</a>
+        <a href="/outbound" class="btn btn-outline-secondary ms-2">返回</a>
+    </form>
+</div>
+{% endblock %}

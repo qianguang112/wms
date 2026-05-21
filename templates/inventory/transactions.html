@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block title %}库存流水 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-list-ul me-2"></i>库存流水</h2>
+    <a href="/inventory" class="btn btn-outline-secondary btn-sm"><i class="bi bi-clipboard-data me-1"></i>返回库存</a>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-2">
+            <select name="sku_id" class="form-select">
+                <option value="">全部SKU</option>
+                {% for s in skus_list %}<option value="{{ s.id }}" {% if sku_id==s.id|string %}selected{% endif %}>{{ s.sku_code }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="type" class="form-select">
+                <option value="">全部类型</option>
+                <option value="inbound" {% if type=='inbound' %}selected{% endif %}>入库</option>
+                <option value="outbound" {% if type=='outbound' %}selected{% endif %}>出库</option>
+                <option value="move" {% if type=='move' %}selected{% endif %}>移库</option>
+                <option value="freeze" {% if type=='freeze' %}selected{% endif %}>冻结</option>
+                <option value="release" {% if type=='release' %}selected{% endif %}>释放</option>
+                <option value="count_adjust" {% if type=='count_adjust' %}selected{% endif %}>盘点调整</option>
+            </select>
+        </div>
+        <div class="col-md-2"><input type="text" name="reference_no" class="form-control" placeholder="单据号" value="{{ reference_no }}"></div>
+        <div class="col-md-2"><input type="date" name="date_from" class="form-control" value="{{ date_from }}"></div>
+        <div class="col-md-2"><input type="date" name="date_to" class="form-control" value="{{ date_to }}"></div>
+        <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">查询</button></div>
+    </form>
+</div>
+
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead><tr><th>时间</th><th>SKU</th><th>库位</th><th>类型</th><th>数量变动</th><th>结存</th><th>单据号</th><th>操作人</th><th>备注</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+            <tr>
+                <td class="text-muted small">{{ r.created_at[:16] }}</td>
+                <td>{{ r.sku_name }} <small class="text-muted">{{ r.sku_code }}</small></td>
+                <td>{{ r.location_code }}</td>
+                <td>
+                    {% if r.transaction_type == 'inbound' %}<span class="badge badge-success">入库</span>
+                    {% elif r.transaction_type == 'outbound' %}<span class="badge badge-primary">出库</span>
+                    {% elif r.transaction_type == 'move' %}<span class="badge badge-warning">移库</span>
+                    {% elif r.transaction_type == 'count_adjust' %}<span class="badge badge-danger">盘点调整</span>
+                    {% else %}<span class="badge badge-secondary">{{ r.transaction_type }}</span>{% endif %}
+                </td>
+                <td>
+                    {% if r.qty_change > 0 %}<span class="text-success">+{{ r.qty_change }}</span>
+                    {% elif r.qty_change < 0 %}<span class="text-danger">{{ r.qty_change }}</span>
+                    {% else %}<span class="text-muted">0</span>{% endif %}
+                </td>
+                <td>{{ r.balance_qty }}</td>
+                <td>{{ r.reference_no or '-' }}</td>
+                <td>{{ r.operator or '-' }}</td>
+                <td class="text-muted small">{{ r.remark or '-' }}</td>
+            </tr>
+        {% else %}
+            <tr><td colspan="9" class="text-center text-muted py-4">暂无流水记录</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

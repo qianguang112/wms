@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}上架 - {{ receipt.receipt_no }} - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-arrow-up-right-square me-2"></i>上架作业: {{ receipt.receipt_no }}</h2>
+    <p class="text-muted">{{ receipt.warehouse_name }} · {{ receipt.receipt_no }}</p>
+</div>
+
+<form method="post" action="/inbound/receipt/{{ receipt.id }}/putaway/confirm">
+<div class="card p-0 mb-3">
+    <table class="table mb-0">
+        <thead><tr><th>SKU</th><th>合格数量</th><th>推荐库位</th><th>实际库位ID</th><th>上架数量</th><th>批号</th></tr></thead>
+        <tbody>
+        {% for r in recommendations %}
+            <tr>
+                <td><strong>{{ r.line.sku_code }}</strong> - {{ r.line.sku_name }}</td>
+                <td>{{ r.line.accepted_qty }}</td>
+                <td>
+                    {% if r.recommended %}
+                    <span class="text-success"><i class="bi bi-check-circle me-1"></i>{{ r.recommended.code }}</span>
+                    <small class="text-muted d-block">({{ r.area_name or '库区' }})</small>
+                    {% else %}
+                    <span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>无空库位</span>
+                    {% endif %}
+                </td>
+                <td>
+                    <input type="hidden" name="line_ids" value="{{ r.line.id }}">
+                    <input type="number" name="location_ids" class="form-control form-control-sm" value="{{ r.recommended.id if r.recommended else '' }}" style="width:80px" required>
+                </td>
+                <td>
+                    <input type="number" name="qtys" class="form-control form-control-sm" value="{{ r.line.accepted_qty }}" step="0.01" style="width:100px" required>
+                </td>
+                <td>{{ r.line.batch_no or '-' }}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<div class="mb-3">
+    <label class="form-label">操作人</label>
+    <input type="text" name="operator" class="form-control" style="max-width:240px;">
+</div>
+<button type="submit" class="btn btn-success"><i class="bi bi-check-lg me-1"></i>确认上架</button>
+<a href="/inbound/receipt/{{ receipt.id }}" class="btn btn-outline-secondary ms-2">返回收货单</a>
+</form>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}{% if asset and asset.id %}编辑资产{% elif asset and not asset.id %}登记资产{% else %}登记资产{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2>
+        <i class="bi bi-pc-display me-2"></i>
+        {% if readonly %}资产详情{% elif asset %}编辑资产{% else %}登记固定资产{% endif %}
+    </h2>
+</div>
+
+<div class="card p-4" style="max-width:800px;">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <form method="post" action="{% if asset and asset.id and not readonly %}/assets/{{ asset.id }}/edit{% else %}/assets/new{% endif %}">
+        <div class="row g-3">
+            {% if asset %}
+            <div class="col-md-6">
+                <label class="form-label fw-bold">资产编号</label>
+                <input type="text" class="form-control" value="{{ asset.asset_no }}" disabled>
+            </div>
+            {% endif %}
+            <div class="col-md-6">
+                <label class="form-label">名称 <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control" value="{{ asset.name if asset else '' }}" required {% if readonly %}disabled{% endif %}>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">规格型号</label>
+                <input type="text" name="spec" class="form-control" value="{{ asset.spec if asset else '' }}" {% if readonly %}disabled{% endif %}>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">数量</label>
+                <input type="number" name="qty" class="form-control" value="{{ asset.qty if asset else 1 }}" min="1" {% if readonly %}disabled{% endif %}>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">单价</label>
+                <input type="number" name="unit_price" class="form-control" value="{{ asset.unit_price if asset else 0 }}" step="0.01" {% if readonly %}disabled{% endif %}>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">总价值</label>
+                <input type="number" class="form-control" value="{{ '%.2f'|format(asset.qty * asset.unit_price) if asset else '0.00' }}" readonly disabled>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">购买日期</label>
+                <input type="date" name="purchase_date" class="form-control" value="{{ asset.purchase_date if asset else '' }}" {% if readonly %}disabled{% endif %}>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">使用部门</label>
+                <input type="text" name="department" class="form-control" value="{{ asset.department if asset else '' }}" {% if readonly %}disabled{% endif %}>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">存放地点</label>
+                <input type="text" name="location" class="form-control" value="{{ asset.location if asset else '' }}" {% if readonly %}disabled{% endif %}>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">管理人 <span class="text-danger">*</span></label>
+                <input type="text" name="manager" class="form-control" value="{{ asset.manager if asset else '' }}" required {% if readonly %}disabled{% endif %}>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">状态</label>
+                <select name="status" class="form-select" {% if readonly %}disabled{% endif %}>
+                    {% for val, label in status_labels.items() %}
+                    <option value="{{ val }}" {% if asset and asset.status==val %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-12">
+                <label class="form-label">备注</label>
+                <textarea name="remark" class="form-control" rows="2" {% if readonly %}disabled{% endif %}>{{ asset.remark if asset else '' }}</textarea>
+            </div>
+        </div>
+        <div class="mt-4">
+            {% if not readonly %}
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>保存</button>
+            {% endif %}
+            <a href="/assets" class="btn btn-outline-secondary ms-2">{% if readonly %}返回{% else %}取消{% endif %}</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

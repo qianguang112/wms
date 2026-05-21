@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block title %}{{ area.name }} - 新增库位 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-grid me-2"></i>{{ area.name }} - 新增库位</h2>
+</div>
+
+<div class="card p-4" style="max-width: 640px;">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">库位编码 <span class="text-danger">*</span></label>
+            <input type="text" name="code" class="form-control" placeholder="如 A-01-02-03（区-排-列-层）" required>
+            <div class="form-text">格式：区代码-排号-列号-层号，如 A-01-02-03</div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">容量</label>
+            <input type="number" name="capacity" class="form-control" value="1" step="0.1">
+        </div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/warehouse/areas/{{ area.id }}/locations" class="btn btn-outline-secondary ms-2">取消</a>
+    </form>
+</div>
+{% endblock %}

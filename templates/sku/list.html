@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block title %}物料/SKU - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-box me-2"></i>物料/SKU 管理</h2>
+    <a href="/sku/new" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>新增SKU</a>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-4"><input type="text" name="search" class="form-control" placeholder="搜索编码/名称/条码" value="{{ search }}"></div>
+        <div class="col-md-3"><input type="text" name="category" class="form-control" placeholder="分类" value="{{ category }}"></div>
+        <div class="col-md-2">
+            <select name="abc_class" class="form-select">
+                <option value="">全部ABC</option>
+                {% for c in abc_classes %}<option value="{{ c }}" {% if abc_class==c %}selected{% endif %}>{{ c }}类</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search"></i> 搜索</button></div>
+        <div class="col-md-1"><a href="/sku" class="btn btn-outline-secondary w-100">重置</a></div>
+    </form>
+</div>
+
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead>
+            <tr><th>编码</th><th>名称</th><th>分类</th><th>规格</th><th>单位</th><th>条码</th><th>ABC</th><th>效期(天)</th><th>安全库存</th><th>操作</th></tr>
+        </thead>
+        <tbody>
+        {% for r in rows %}
+            <tr>
+                <td><strong>{{ r.sku_code }}</strong></td>
+                <td>{{ r.name }}</td>
+                <td>{{ r.category or '-' }}</td>
+                <td>{{ r.spec or '-' }}</td>
+                <td>{{ r.unit }}</td>
+                <td>{{ r.barcode or '-' }}</td>
+                <td><span class="badge badge-{{ 'warning' if r.abc_class=='A' else ('success' if r.abc_class=='B' else 'secondary') }}">{{ r.abc_class }}类</span></td>
+                <td>{{ r.shelf_life_days if r.shelf_life_days else '-' }}</td>
+                <td>{{ r.safety_stock }}</td>
+                <td>
+                    <a href="/sku/{{ r.id }}/packages" class="btn btn-outline-secondary btn-xs me-1"><i class="bi bi-boxes"></i></a>
+                    <a href="/sku/{{ r.id }}/edit" class="btn btn-outline-primary btn-xs me-1"><i class="bi bi-pencil"></i></a>
+                    <form method="post" action="/sku/{{ r.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除？')">
+                        <button class="btn btn-outline-danger btn-xs"><i class="bi bi-trash"></i></button>
+                    </form>
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="10" class="text-center text-muted py-4">暂无SKU</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

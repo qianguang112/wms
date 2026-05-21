@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}库存冻结管理 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-lock me-2"></i>库存冻结/释放管理</h2>
+</div>
+
+<!-- 冻结表单 -->
+<div class="card p-4 mb-4" style="max-width: 640px;">
+    <h5 class="mb-3">冻结库存</h5>
+    <form method="post" action="/internal/block">
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">库存记录ID <span class="text-danger">*</span></label>
+                <input type="number" name="inventory_id" class="form-control" placeholder="inventory表ID" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">冻结数量 <span class="text-danger">*</span></label>
+                <input type="number" name="frozen_qty" class="form-control" step="0.01" required>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">冻结类型</label>
+                <select name="block_type" class="form-select">
+                    {% for t, label in block_type_labels.items() %}
+                    <option value="{{ t }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">操作人</label>
+                <input type="text" name="created_by" class="form-control">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">冻结原因</label>
+            <input type="text" name="reason" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-danger"><i class="bi bi-lock me-1"></i>确认冻结</button>
+    </form>
+</div>
+
+<!-- 当前冻结列表 -->
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead><tr><th>ID</th><th>SKU</th><th>库位</th><th>冻结类型</th><th>冻结数量</th><th>原因</th><th>操作人</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody>
+        {% for b in blocks %}
+            <tr>
+                <td>{{ b.id }}</td>
+                <td>{{ b.sku_name }} <small class="text-muted">{{ b.sku_code }}</small></td>
+                <td>{{ b.location_code }}</td>
+                <td><span class="badge badge-warning">{{ block_type_labels.get(b.block_type, b.block_type) }}</span></td>
+                <td>{{ b.frozen_qty }}</td>
+                <td>{{ b.reason or '-' }}</td>
+                <td>{{ b.created_by or '-' }}</td>
+                <td>
+                    {% if b.status == 'frozen' %}<span class="badge badge-danger">冻结中</span>
+                    {% else %}<span class="badge badge-success">已释放</span>{% endif %}
+                </td>
+                <td>
+                    {% if b.status == 'frozen' %}
+                    <form method="post" action="/internal/block/{{ b.id }}/release" style="display:inline">
+                        <input type="hidden" name="released_by" value="">
+                        <button class="btn btn-outline-success btn-xs" onclick="return confirm('确认释放？')"><i class="bi bi-unlock"></i> 释放</button>
+                    </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% else %}
+            <tr><td colspan="9" class="text-center text-muted py-4">暂无冻结记录</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<a href="/internal" class="btn btn-outline-secondary mt-3"><i class="bi bi-arrow-left me-1"></i>返回</a>
+{% endblock %}

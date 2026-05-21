@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block title %}移库 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-arrows-move me-2"></i>移库/移位</h2>
+</div>
+
+<div class="card p-4" style="max-width: 640px;">
+    <form method="post" action="/internal/move">
+        <div class="mb-3">
+            <label class="form-label">物料/SKU <span class="text-danger">*</span></label>
+            <input type="number" name="sku_id" class="form-control" placeholder="输入SKU ID" required>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">源库位 <span class="text-danger">*</span></label>
+                <input type="number" name="from_location_id" class="form-control" placeholder="库位ID" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">目标库位 <span class="text-danger">*</span></label>
+                <input type="number" name="to_location_id" class="form-control" placeholder="库位ID" required>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">数量 <span class="text-danger">*</span></label>
+                <input type="number" name="qty" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">批次</label>
+                <input type="text" name="batch_no" class="form-control" placeholder="留空移全部">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">操作人</label>
+            <input type="text" name="moved_by" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">备注</label>
+            <input type="text" name="remark" class="form-control">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-arrow-left-right me-1"></i>确认移库</button>
+        <a href="/internal" class="btn btn-outline-secondary ms-2">取消</a>
+    </form>
+</div>
+{% endblock %}

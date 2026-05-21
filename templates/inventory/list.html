@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}库存查询 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-clipboard-data me-2"></i>库存查询</h2>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-2">
+            <select name="warehouse_id" class="form-select">
+                <option value="">全部仓库</option>
+                {% for w in warehouses %}<option value="{{ w.id }}" {% if warehouse_id==w.id|string %}selected{% endif %}>{{ w.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <select name="sku_id" class="form-select">
+                <option value="">全部SKU</option>
+                {% for s in skus_list %}<option value="{{ s.id }}" {% if sku_id==s.id|string %}selected{% endif %}>{{ s.sku_code }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="location_id" class="form-control" placeholder="库位ID" value="{{ location_id }}">
+        </div>
+        <div class="col-md-2">
+            <input type="text" name="batch_no" class="form-control" placeholder="批次" value="{{ batch_no }}">
+        </div>
+        <div class="col-md-2"><button type="submit" class="btn btn-outline-primary w-100">查询</button></div>
+        <div class="col-md-2"><a href="/inventory" class="btn btn-outline-secondary w-100">重置</a></div>
+    </form>
+</div>
+
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead><tr><th>SKU</th><th>库位</th><th>库区</th><th>仓库</th><th>批次</th><th>数量</th><th>冻结量</th><th>可用量</th><th>效期</th><th>状态</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+            <tr>
+                <td><strong>{{ r.sku_code }}</strong> - {{ r.sku_name }}</td>
+                <td>{{ r.location_code }}</td>
+                <td>{{ r.area_name }}</td>
+                <td>{{ r.warehouse_name }}</td>
+                <td>{{ r.batch_no or '-' }}</td>
+                <td>{{ r.qty }}</td>
+                <td>{{ r.frozen_qty }}</td>
+                <td><strong>{{ r.qty - r.frozen_qty }}</strong></td>
+                <td>{% if r.expiry_date %}<span class="badge badge-warning">{{ r.expiry_date }}</span>{% else %}-{% endif %}</td>
+                <td><span class="badge badge-{{ 'success' if r.status=='available' else 'danger' }}">{{ r.status }}</span></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="10" class="text-center text-muted py-4">暂无库存数据</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-2">
+    <a href="/inventory/transactions" class="btn btn-outline-primary btn-sm"><i class="bi bi-list-ul me-1"></i>查看库存流水</a>
+</div>
+{% endblock %}

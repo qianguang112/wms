@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block title %}盘点计划 {{ plan.plan_no }} - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2><i class="bi bi-clipboard-check me-2"></i>盘点: {{ plan.plan_no }}</h2>
+        <p class="text-muted mb-0">{{ plan.warehouse_name }} · {{ count_type_labels.get(plan.count_type, plan.count_type) }} · 状态: {{ plan.status }}</p>
+    </div>
+    <div>
+        {% if plan.status == 'created' or plan.status == 'counting' %}
+        <a href="/internal/count/plan/{{ plan.id }}/execute" class="btn btn-success"><i class="bi bi-play me-1"></i>开始盘点</a>
+        {% endif %}
+    </div>
+</div>
+
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead><tr><th>库位</th><th>SKU</th><th>批次</th><th>系统数量</th><th>实盘数量</th><th>差异</th><th>盘点人</th><th>状态</th></tr></thead>
+        <tbody>
+        {% for t in tasks %}
+            <tr class="{% if t.difference and t.difference != 0 %}warning-row{% endif %}">
+                <td>{{ t.location_code }}</td>
+                <td>{{ t.sku_name or '-' }} <small class="text-muted">{{ t.sku_code or '' }}</small></td>
+                <td>{{ t.batch_no or '-' }}</td>
+                <td>{{ t.system_qty }}</td>
+                <td>{{ t.count_qty if t.count_qty is not none else '—' }}</td>
+                <td>
+                    {% if t.difference is not none %}
+                        {% if t.difference == 0 %}<span class="badge badge-success">0</span>
+                        {% elif t.difference > 0 %}<span class="badge badge-primary">+{{ t.difference }}</span>
+                        {% else %}<span class="badge badge-danger">{{ t.difference }}</span>
+                        {% endif %}
+                    {% else %}-{% endif %}
+                </td>
+                <td>{{ t.counted_by or '-' }}</td>
+                <td><span class="badge badge-{{ 'success' if t.status=='done' else ('warning' if t.status=='counted' else 'secondary') }}">{{ t.status }}</span></td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<div class="mt-3">
+    {% if plan.status == 'counting' or plan.status == 'counted' %}
+    <form method="post" action="/internal/count/plan/{{ plan.id }}/complete" class="d-inline">
+        <button class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>完成盘点</button>
+    </form>
+    {% endif %}
+    {% set has_diff = tasks|selectattr('difference','ne',0)|selectattr('difference','notnone')|list|length > 0 %}
+    {% if has_diff and plan.status == 'done' %}
+    <form method="post" action="/internal/count/plan/{{ plan.id }}/adjust" class="d-inline">
+        <input type="text" name="operator" class="form-control form-control-sm d-inline" style="width:160px" placeholder="调整人">
+        <button class="btn btn-warning ms-2" onclick="return confirm('确认用实盘数调整库存？')"><i class="bi bi-arrow-repeat me-1"></i>差异调整</button>
+    </form>
+    {% endif %}
+    <a href="/internal" class="btn btn-outline-secondary ms-2"><i class="bi bi-arrow-left me-1"></i>返回</a>
+</div>
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}{{ warehouse.name }} - {{ '新增' if not area else '编辑' }}库区 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-diagram-2 me-2"></i>{{ warehouse.name }} - {{ '新增' if not area else '编辑' }}库区</h2>
+</div>
+
+<div class="card p-4" style="max-width: 640px;">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <form method="post" action="/warehouse/{{ warehouse.id }}/areas/new">
+        <div class="mb-3">
+            <label class="form-label">库区名称 <span class="text-danger">*</span></label>
+            <input type="text" name="name" class="form-control" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">库区类型</label>
+            <select name="area_type" class="form-select">
+                {% for t in area_types %}
+                <option value="{{ t }}">{{ area_type_labels[t] }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="row mb-3">
+            <div class="col-6">
+                <label class="form-label">最低温度 (°C)</label>
+                <input type="number" name="temp_min" class="form-control" step="0.1">
+            </div>
+            <div class="col-6">
+                <label class="form-label">最高温度 (°C)</label>
+                <input type="number" name="temp_max" class="form-control" step="0.1">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/warehouse/{{ warehouse.id }}/areas" class="btn btn-outline-secondary ms-2">取消</a>
+    </form>
+</div>
+{% endblock %}

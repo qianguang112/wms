@@ -1,0 +1,41 @@
+{% extends "base.html" %}
+{% block title %}效期预警 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-exclamation-triangle me-2"></i>效期预警</h2>
+    <form method="get" class="d-flex gap-2">
+        <select name="warning_days" class="form-select" style="width:180px">
+            <option value="7" {% if warning_days==7 %}selected{% endif %}>7天内到期</option>
+            <option value="30" {% if warning_days==30 %}selected{% endif %}>30天内到期</option>
+            <option value="60" {% if warning_days==60 %}selected{% endif %}>60天内到期</option>
+            <option value="90" {% if warning_days==90 %}selected{% endif %}>90天内到期</option>
+        </select>
+        <button type="submit" class="btn btn-outline-primary">查询</button>
+    </form>
+</div>
+
+<div class="card p-0">
+    <table class="table mb-0">
+        <thead><tr><th>SKU</th><th>库位</th><th>库区</th><th>仓库</th><th>批次</th><th>数量</th><th>效期</th><th>剩余天数</th></tr></thead>
+        <tbody>
+        {% for r in rows %}
+            {% set days_left = ((r.expiry_date | string)[:10] != '' and ((r.expiry_date[:10] | strptime) if False else None)) %}
+            <tr class="warning-row">
+                <td><strong>{{ r.sku_code }}</strong> - {{ r.sku_name }}</td>
+                <td>{{ r.location_code }}</td>
+                <td>{{ r.area_name }}</td>
+                <td>{{ r.warehouse_name }}</td>
+                <td>{{ r.batch_no or '-' }}</td>
+                <td>{{ r.qty }} {{ r.unit }}</td>
+                <td><span class="text-danger">{{ r.expiry_date }}</span></td>
+                <td><span class="badge badge-danger">即将到期</span></td>
+            </tr>
+        {% else %}
+            <tr><td colspan="8" class="text-center text-muted py-4"><i class="bi bi-check-circle me-1"></i>没有近效期库存</td></tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+<a href="/internal" class="btn btn-outline-secondary mt-3"><i class="bi bi-arrow-left me-1"></i>返回</a>
+{% endblock %}

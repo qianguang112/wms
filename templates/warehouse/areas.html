@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}{{ warehouse.name }} - 库区管理 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-diagram-2 me-2"></i>{{ warehouse.name }} - 库区管理</h2>
+    <a href="/warehouse/{{ warehouse.id }}/areas/new" class="btn btn-primary"><i class="bi bi-plus-lg me-1"></i>新增库区</a>
+</div>
+
+<div class="row">
+{% for a in areas %}
+    <div class="col-md-6 col-lg-4 mb-3">
+        <div class="card p-3">
+            <div class="d-flex justify-content-between align-items-start mb-2">
+                <div>
+                    <strong>{{ a.code }}</strong> - {{ a.name }}
+                    <span class="badge badge-{% if a.area_type=='ambient'%}success{% elif a.area_type=='cold'%}primary{% else %}danger{% endif %} ms-2">{{ area_type_labels.get(a.area_type, a.area_type) }}</span>
+                </div>
+            </div>
+            <div class="text-muted small mb-2">
+                {% if a.temp_min is not none and a.temp_max is not none %}温度: {{ a.temp_min }}°C ~ {{ a.temp_max }}°C{% else %}无温控要求{% endif %}
+            </div>
+            <div class="d-flex gap-1">
+                <a href="/warehouse/areas/{{ a.id }}/locations" class="btn btn-outline-primary btn-sm"><i class="bi bi-grid"></i> 库位</a>
+                <a href="/warehouse/areas/{{ a.id }}/map" class="btn btn-outline-success btn-sm"><i class="bi bi-map"></i> 可视化</a>
+                <form method="post" action="/warehouse/areas/{{ a.id }}/delete" style="display:inline" onsubmit="return confirm('确定删除该库区及其所有库位？')">
+                    <button class="btn btn-outline-danger btn-sm"><i class="bi bi-trash"></i></button>
+                </form>
+            </div>
+        </div>
+    </div>
+{% else %}
+    <div class="col-12"><div class="card p-4 text-center text-muted">暂无库区，请新增</div></div>
+{% endfor %}
+</div>
+<a href="/warehouse" class="btn btn-outline-secondary mt-2"><i class="bi bi-arrow-left me-1"></i>返回仓库列表</a>
+{% endblock %}

@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block title %}新建出库单 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-file-earmark-text me-2"></i>新建出库单</h2>
+</div>
+
+<div class="card p-4">
+    <form method="post" action="/outbound/so/new">
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">仓库 <span class="text-danger">*</span></label>
+                <select name="warehouse_id" class="form-select" required>
+                    {% for w in warehouses %}<option value="{{ w.id }}">{{ w.name }}</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">客户/领用人 <span class="text-danger">*</span></label>
+                <select name="partner_id" class="form-select" required>
+                    {% for p in partners %}<option value="{{ p.id }}">{{ p.code }} - {{ p.name }} ({{ p.partner_type }})</option>{% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">预计发货日期</label>
+                <input type="date" name="scheduled_date" class="form-control">
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-4">
+                <label class="form-label">出库类型</label>
+                <select name="so_type" class="form-select">
+                    {% for t, label in so_type_labels.items() %}
+                    <option value="{{ t }}">{{ label }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">优先级 (1最高)</label>
+                <select name="priority" class="form-select">
+                    <option value="1">1 - 紧急</option>
+                    <option value="3">3 - 较急</option>
+                    <option value="5" selected>5 - 普通</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">操作人</label>
+                <input type="text" name="created_by" class="form-control">
+            </div>
+        </div>
+
+        <hr>
+        <h5 class="mb-3">明细行</h5>
+        <div id="sku-rows">
+            <div class="row g-2 mb-2 sku-row">
+                <div class="col-md-6">
+                    <select name="sku_ids" class="form-select" required>
+                        <option value="">选择SKU...</option>
+                        {% for s in skus %}<option value="{{ s.id }}">{{ s.sku_code }} - {{ s.name }}</option>{% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-3"><input type="number" name="ordered_qtys" class="form-control" placeholder="数量" step="0.01" required></div>
+            </div>
+        </div>
+        <button type="button" class="btn btn-outline-secondary btn-sm mb-3" onclick="addSkuRow()"><i class="bi bi-plus-lg me-1"></i>添加行</button>
+
+        <div class="mb-3">
+            <label class="form-label">备注</label>
+            <textarea name="remark" class="form-control" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary">创建出库单</button>
+        <a href="/outbound" class="btn btn-outline-secondary ms-2">取消</a>
+    </form>
+</div>
+
+<script>
+function addSkuRow() {
+    const template = document.querySelector('.sku-row').cloneNode(true);
+    template.querySelectorAll('input,select').forEach(el => el.value = '');
+    document.getElementById('sku-rows').appendChild(template);
+}
+</script>
+{% endblock %}

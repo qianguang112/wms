@@ -1,0 +1,54 @@
+{% extends "base.html" %}
+{% block title %}{% if supply and supply.id %}编辑用品{% else %}登记办公用品{% endif %}{% endblock %}
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-box-seam me-2"></i>{% if supply %}编辑办公用品{% else %}登记办公用品{% endif %}</h2>
+</div>
+
+<div class="card p-4" style="max-width:600px;">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <form method="post" action="{% if supply and supply.id %}/supplies/{{ supply.id }}/edit{% else %}/supplies/new{% endif %}">
+        <div class="row g-3">
+            <div class="col-12">
+                <label class="form-label">名称 <span class="text-danger">*</span></label>
+                <input type="text" name="name" class="form-control" value="{{ supply.name if supply else '' }}" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">分类</label>
+                <select name="category" class="form-select">
+                    <option value="">请选择</option>
+                    <option value="文具" {% if supply and supply.category=='文具' %}selected{% endif %}>文具</option>
+                    <option value="耗材" {% if supply and supply.category=='耗材' %}selected{% endif %}>耗材</option>
+                    <option value="清洁" {% if supply and supply.category=='清洁' %}selected{% endif %}>清洁</option>
+                    <option value="其他" {% if supply and supply.category=='其他' %}selected{% endif %}>其他</option>
+                </select>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">单位</label>
+                <input type="text" name="unit" class="form-control" value="{{ supply.unit if supply else '个' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">规格</label>
+                <input type="text" name="spec" class="form-control" value="{{ supply.spec if supply else '' }}">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">安全库存（预警线）</label>
+                <input type="number" name="safety_qty" class="form-control" value="{{ supply.safety_qty if supply else 0 }}" min="0" step="1">
+            </div>
+            <div class="col-12">
+                <label class="form-label">备注</label>
+                <textarea name="remark" class="form-control" rows="2">{{ supply.remark if supply else '' }}</textarea>
+            </div>
+        </div>
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>保存</button>
+            <a href="/supplies" class="btn btn-outline-secondary ms-2">取消</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

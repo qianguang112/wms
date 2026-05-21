@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+{% block title %}办公用品库存{% endblock %}
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h2><i class="bi bi-box-seam me-2"></i>办公用品库存</h2>
+    <a href="/supplies/new" class="btn btn-primary"><i class="bi bi-plus-circle me-1"></i>登记用品</a>
+</div>
+
+<div class="card p-3 mb-3">
+    <form method="get" class="row g-2">
+        <div class="col-md-4">
+            <input type="text" name="search" class="form-control" placeholder="搜索物品名称/编号..." value="{{ search }}">
+        </div>
+        <div class="col-md-2">
+            <button type="submit" class="btn btn-outline-primary w-100"><i class="bi bi-search me-1"></i>搜索</button>
+        </div>
+        <div class="col-md-2">
+            <a href="/supplies" class="btn btn-outline-secondary w-100">重置</a>
+        </div>
+    </form>
+</div>
+
+<div class="card p-3 mb-3">
+    <div class="row g-2">
+        <div class="col-md-4">
+            <select class="form-select" data-supply-select>
+                <option value="">-- 选择物品进行入库/领用 --</option>
+                {% for row in rows %}
+                <option value="{{ row.id }}">{{ row.name }} ({{ row.item_no }})</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-success w-100" data-inbound-btn><i class="bi bi-box-arrow-in-down me-1"></i>入库</button>
+        </div>
+        <div class="col-md-2">
+            <button class="btn btn-warning w-100" data-outbound-btn><i class="bi bi-box-arrow-up me-1"></i>领用</button>
+        </div>
+    </div>
+</div>
+
+<div class="card p-3">
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>物品编号</th>
+                    <th>名称</th>
+                    <th>规格</th>
+                    <th>单位</th>
+                    <th>当前库存</th>
+                    <th>安全库存</th>
+                    <th>状态</th>
+                    <th>操作</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in rows %}
+                <tr class="{% if row.safety_qty > 0 and row.current_qty <= row.safety_qty %}warning-row{% endif %}">
+                    <td><code>{{ row.item_no }}</code></td>
+                    <td><strong>{{ row.name }}</strong></td>
+                    <td>{{ row.spec or '-' }}</td>
+                    <td>{{ row.unit }}</td>
+                    <td><strong>{{ row.current_qty }}</strong></td>
+                    <td>{{ row.safety_qty if row.safety_qty else '-' }}</td>
+                    <td>
+                        {% if row.safety_qty > 0 and row.current_qty <= row.safety_qty %}
+                        <span class="badge badge-scrapped">库存不足</span>
+                        {% else %}
+                        <span class="badge" style="background:#D1FAE5;color:#065F46;">正常</span>
+                        {% endif %}
+                    </td>
+                    <td>
+                        <a href="/supplies/{{ row.id }}/inbound" class="btn btn-sm btn-outline-success" title="入库"><i class="bi bi-box-arrow-in-down"></i> 入库</a>
+                        <a href="/supplies/{{ row.id }}/outbound" class="btn btn-sm btn-outline-warning" title="领用"><i class="bi bi-box-arrow-up"></i> 领用</a>
+                        <a href="/supplies/{{ row.id }}/edit" class="btn btn-sm btn-outline-primary" title="编辑"><i class="bi bi-pencil"></i> 编辑</a>
+                        <a href="/supplies/{{ row.id }}/history" class="btn btn-sm btn-outline-secondary" title="出入库记录"><i class="bi bi-clock-history"></i> 记录</a>
+                        <form method="post" action="/supplies/{{ row.id }}/delete" style="display:inline">
+                            <button type="submit" class="btn btn-sm btn-outline-danger" data-delete-btn title="删除用品"><i class="bi bi-trash"></i> 删除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+                {% if rows|length == 0 %}
+                <tr><td colspan="8" class="text-center text-muted py-4">暂无数据</td></tr>
+                {% endif %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

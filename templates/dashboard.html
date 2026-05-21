@@ -1,0 +1,160 @@
+{% extends "base.html" %}
+{% block title %}仪表盘 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header"><h2><i class="bi bi-speedometer2 me-2"></i>仪表盘</h2></div>
+
+<!-- WMS 核心指标 -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ sku_count }}</div>
+            <div class="label">SKU 总数</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ loc_occupied }}/{{ loc_total }}</div>
+            <div class="label">库位占用 / 总数</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ wms_today_inbound }}</div>
+            <div class="label">今日入库单</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat {% if near_expiry_count > 0 %}stat-danger{% endif %} p-3">
+            <div class="value">{{ near_expiry_count }}</div>
+            <div class="label">近效期预警</div>
+        </div>
+    </div>
+</div>
+
+<!-- 待处理任务 -->
+<div class="row g-4 mb-4">
+    <div class="col-md-2">
+        <div class="card p-3 text-center">
+            <div class="fw-bold fs-4 text-primary">{{ pending_receipt }}</div>
+            <small class="text-muted">待收货/质检</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card p-3 text-center">
+            <div class="fw-bold fs-4 text-primary">{{ pending_putaway }}</div>
+            <small class="text-muted">待上架</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card p-3 text-center">
+            <div class="fw-bold fs-4 text-warning">{{ pending_pick }}</div>
+            <small class="text-muted">待拣货</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card p-3 text-center">
+            <div class="fw-bold fs-4 text-warning">{{ pending_ship }}</div>
+            <small class="text-muted">待发货</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card p-3 text-center">
+            <div class="fw-bold fs-4 text-danger">{{ frozen_count }}</div>
+            <small class="text-muted">冻结中</small>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card p-3 text-center">
+            <div class="fw-bold fs-4 text-success">{{ wms_today_outbound }}</div>
+            <small class="text-muted">今日发货</small>
+        </div>
+    </div>
+</div>
+
+<hr class="my-4">
+
+<!-- 原有资产模块 -->
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ asset_count }}</div>
+            <div class="label">固定资产总数</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">¥ {{ "{:,.2f}".format(asset_value) }}</div>
+            <div class="label">资产总价值（在册）</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat p-3">
+            <div class="value">{{ supply_count }}</div>
+            <div class="label">办公用品品类</div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="card card-stat {% if warning_count > 0 %}stat-danger{% endif %} p-3">
+            <div class="value">{{ warning_count }}</div>
+            <div class="label">库存预警项</div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h6 class="mb-3 fw-bold">固定资产状态分布</h6>
+            <div class="d-flex gap-4">
+                <div class="text-center">
+                    <div class="fw-bold fs-5" style="color:#007AFF;">{{ in_use }}</div>
+                    <small class="text-muted">使用中</small>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold fs-5" style="color:#FF9500;">{{ idle }}</div>
+                    <small class="text-muted">闲置</small>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold fs-5" style="color:#FF3B30;">{{ scrapped }}</div>
+                    <small class="text-muted">已报废</small>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card p-4">
+            <h6 class="mb-3 fw-bold">今日办公用品动态</h6>
+            <div class="d-flex gap-4">
+                <div class="text-center">
+                    <div class="fw-bold fs-5" style="color:#34C759;">{{ today_inbound }}</div>
+                    <small class="text-muted">入库笔数</small>
+                </div>
+                <div class="text-center">
+                    <div class="fw-bold fs-5" style="color:#FF9500;">{{ today_outbound }}</div>
+                    <small class="text-muted">领用笔数</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-12">
+        <div class="card p-4">
+            <h6 class="mb-3 fw-bold">资产地点分布</h6>
+            <div class="d-flex gap-4 flex-wrap">
+                {% for loc in location_stats %}
+                <div class="text-center">
+                    <div class="fw-bold fs-5" style="color:#007AFF;">{{ loc.cnt }}</div>
+                    <small class="text-muted">{{ loc.location }}</small>
+                </div>
+                {% endfor %}
+                {% if location_stats|length == 0 %}
+                <small class="text-muted">暂无数据</small>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

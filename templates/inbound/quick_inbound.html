@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block title %}快速入库 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-lightning me-2"></i>快速入库（跳过ASN）</h2>
+</div>
+
+<div class="card p-4" style="max-width: 640px;">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <form method="post" action="/inbound/quick">
+        <div class="mb-3">
+            <label class="form-label">仓库 <span class="text-danger">*</span></label>
+            <select name="warehouse_id" class="form-select" required>
+                <option value="">请选择仓库</option>
+                {% for w in warehouses %}<option value="{{ w.id }}">{{ w.code }} - {{ w.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">入库类型</label>
+            <select name="receipt_type" class="form-select">
+                {% for t, label in receipt_type_labels.items() %}
+                <option value="{{ t }}">{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">物料/SKU <span class="text-danger">*</span></label>
+            <select name="sku_id" class="form-select" required>
+                <option value="">请选择物料</option>
+                {% for s in skus %}<option value="{{ s.id }}">{{ s.sku_code }} - {{ s.name }}</option>{% endfor %}
+            </select>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">数量 <span class="text-danger">*</span></label>
+                <input type="number" name="qty" class="form-control" step="0.01" required>
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">目标库位 <span class="text-danger">*</span></label>
+                <select name="location_id" class="form-select" required>
+                    <option value="">请选择库位</option>
+                    {% for l in locations %}
+                    <option value="{{ l.id }}">{{ l.area_name }} - {{ l.code }} ({{ '空闲' if l.status=='empty' else '占用' }})</option>
+                    {% endfor %}
+                </select>
+                {% if not locations %}
+                <div class="form-text text-danger">暂无可用库位，请先在仓库管理中创建库位</div>
+                {% endif %}
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <label class="form-label">批号</label>
+                <input type="text" name="batch_no" class="form-control">
+            </div>
+            <div class="col-md-6">
+                <label class="form-label">生产日期</label>
+                <input type="date" name="production_date" class="form-control">
+            </div>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">操作人</label>
+            <input type="text" name="operator" class="form-control">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">备注</label>
+            <textarea name="remark" class="form-control" rows="2"></textarea>
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="bi bi-check-lg me-1"></i>确认入库</button>
+        <a href="/inbound" class="btn btn-outline-secondary ms-2">取消</a>
+    </form>
+</div>
+{% endblock %}

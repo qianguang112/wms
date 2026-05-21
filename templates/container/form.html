@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+{% block title %}{{ '编辑' if container else '新增' }}容器 - WMS{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2><i class="bi bi-grid-3x3 me-2"></i>{{ '编辑' if container else '新增' }}容器</h2>
+</div>
+
+<div class="card p-4" style="max-width: 640px;">
+    {% if error %}
+    <div class="alert alert-danger alert-dismissible fade show" style="border-radius:12px; margin-bottom:20px;">
+        <i class="bi bi-exclamation-triangle me-2"></i>{{ error }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+    </div>
+    {% endif %}
+    <form method="post">
+        <div class="mb-3">
+            <label class="form-label">容器类型</label>
+            <select name="container_type" class="form-select">
+                {% for t, label in container_type_labels.items() %}
+                <option value="{{ t }}" {% if container and container.container_type==t %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">容量</label>
+            <input type="number" name="capacity" class="form-control" value="{{ container.capacity if container else 0 }}" step="0.1">
+        </div>
+        <div class="mb-3">
+            <label class="form-label">所在库位</label>
+            <select name="location_id" class="form-select">
+                <option value="">未分配</option>
+                {% for l in locations %}
+                <option value="{{ l.id }}" {% if container and container.location_id==l.id %}selected{% endif %}>{{ l.area_name }} - {{ l.code }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        {% if container %}
+        <div class="mb-3">
+            <label class="form-label">状态</label>
+            <select name="status" class="form-select">
+                <option value="idle" {% if container.status=='idle' %}selected{% endif %}>空闲</option>
+                <option value="in_use" {% if container.status=='in_use' %}selected{% endif %}>使用中</option>
+                <option value="damaged" {% if container.status=='damaged' %}selected{% endif %}>损坏</option>
+            </select>
+        </div>
+        {% endif %}
+        <button type="submit" class="btn btn-primary">保存</button>
+        <a href="/container" class="btn btn-outline-secondary ms-2">取消</a>
+    </form>
+</div>
+{% endblock %}

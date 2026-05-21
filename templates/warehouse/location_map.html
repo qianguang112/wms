@@ -1,0 +1,109 @@
+{% extends "base.html" %}
+{% block title %}{{ area.name }} - 库位可视化 - WMS{% endblock %}
+
+{% block extra_head %}
+<style>
+.map-container {
+    overflow: auto;
+}
+.map-grid {
+    display: grid;
+    gap: 4px;
+    min-width: 800px;
+}
+.map-cell {
+    aspect-ratio: 1;
+    min-width: 56px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 10px;
+    font-weight: 600;
+    transition: all 0.15s ease;
+    position: relative;
+}
+.map-cell:hover { transform: scale(1.08); z-index: 10; box-shadow: 0 4px 16px rgba(0,0,0,0.15); }
+.map-empty { background: rgba(52,199,89,0.15); color: #1d7a37; }
+.map-occupied { background: rgba(255,149,0,0.15); color: #996000; }
+.map-frozen { background: rgba(255,59,48,0.12); color: #b82a22; }
+.map-legend {
+    display: flex; gap: 20px; flex-wrap: wrap;
+}
+.map-legend .legend-item {
+    display: flex; align-items: center; gap: 6px; font-size: 13px;
+}
+.legend-dot {
+    width: 16px; height: 16px; border-radius: 4px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <h2><i class="bi bi-map me-2"></i>{{ area.name }} - 库位可视化</h2>
+        <p class="text-muted mb-0">{{ area.warehouse_name }} · 共 {{ locs|length }} 个库位</p>
+    </div>
+    <div class="map-legend">
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(52,199,89,0.3)"></div> 空闲</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,149,0,0.3)"></div> 占用</div>
+        <div class="legend-item"><div class="legend-dot" style="background:rgba(255,59,48,0.25)"></div> 冻结</div>
+    </div>
+</div>
+
+<div class="card p-3 map-container">
+    {% if locs %}
+    <!-- 按层级分tab -->
+    {% set levels = [] %}
+    {% for l in locs %}{% if l.level_no not in levels %}{% set _ = levels.append(l.level_no) %}{% endif %}{% endfor %}
+    {% set levels = levels|sort %}
+
+    {% if levels|length > 1 %}
+    <ul class="nav nav-tabs mb-3" id="levelTabs">
+        {% for lev in levels %}
+        <li class="nav-item">
+            <button class="nav-link {% if loop.first %}active{% endif %}" data-bs-toggle="tab" data-bs-target="#level{{ lev }}">第 {{ lev }} 层</button>
+        </li>
+        {% endfor %}
+    </ul>
+    {% endif %}
+
+    <div class="tab-content">
+    {% for lev in levels %}
+    <div class="tab-pane {% if loop.first %}active{% endif %}" id="level{{ lev }}">
+        {% set level_locs = locs|selectattr('level_no','equalto',lev)|list %}
+        {% set max_row = level_locs|map(attribute='row_no')|max|default(5) %}
+        {% set max_col = level_locs|map(attribute='col_no')|max|default(10) %}
+
+        <div class="map-grid" style="grid-template-columns: repeat({{ max_col }}, 1fr);">
+        {% for r in range(1, max_row + 1) %}
+            {% for c in range(1, max_col + 1) %}
+                {% set cell = level_locs|selectattr('row_no','equalto',r)|selectattr('col_no','equalto',c)|list %}
+                {% if cell and cell|length > 0 %}
+                {% set loc = cell[0] %}
+                <div class="map-cell map-{{ loc.status }}" title="{{ loc.code }}&#10;状态: {{ status_labels.get(loc.status, loc.status) }}&#10;负载: {{ loc.current_load }}/{{ loc.capacity }}" onclick="alert('库位: {{ loc.code }}\n状态: {{ status_labels.get(loc.status, loc.status) }}\n负载: {{ loc.current_load }}/{{ loc.capacity }}')">
+                    <span>{{ loc.code[-2:] }}</span>
+                </div>
+                {% else %}
+                <div style="aspect-ratio:1; min-width:56px;"></div>
+                {% endif %}
+            {% endfor %}
+        {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+    </div>
+
+    {% else %}
+    <div class="text-center text-muted py-5">暂无库位数据</div>
+    {% endif %}
+</div>
+
+<div class="mt-3 d-flex gap-2">
+    <a href="/warehouse/areas/{{ area.id }}/locations" class="btn btn-outline-secondary"><i class="bi bi-grid"></i> 库位列表</a>
+    <a href="/warehouse/{{ area.warehouse_id }}/areas" class="btn btn-outline-secondary"><i class="bi bi-arrow-left"></i> 返回库区</a>
+</div>
+{% endblock %}
